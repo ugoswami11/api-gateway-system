@@ -2,6 +2,7 @@ package com.gateway.gatewayservice.filter;
 
 import com.gateway.gatewayservice.constants.SecurityConstants;
 import com.gateway.gatewayservice.util.JwtUtil;
+import com.gateway.gatewayservice.util.ResponseUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Mono;
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     private final JwtUtil jwtUtil;
+    private final ResponseUtil responseUtil;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange,
@@ -48,10 +50,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
             log.error("Missing or invalid Authorization header");
 
-            exchange.getResponse()
-                    .setStatusCode(HttpStatus.UNAUTHORIZED);
-
-            return exchange.getResponse().setComplete();
+            return responseUtil.buildErrorResponse(
+                    exchange,
+                    HttpStatus.UNAUTHORIZED,
+                    "Missing or invalid JWT token"
+            );
         }
 
         /*
@@ -80,10 +83,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
             log.error("JWT validation failed: {}", ex.getMessage());
 
-            exchange.getResponse()
-                    .setStatusCode(HttpStatus.UNAUTHORIZED);
-
-            return exchange.getResponse().setComplete();
+            return responseUtil.buildErrorResponse(
+                    exchange,
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid or expired JWT token"
+            );
         }
 
         /*

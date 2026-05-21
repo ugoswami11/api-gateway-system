@@ -25,6 +25,8 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange,
                              org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
 
+        log.info("AuthenticationFilter executed");
+
         String path = exchange.getRequest()
                 .getURI()
                 .getPath();
@@ -60,28 +62,37 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         /*
          * Extract Token
          */
-        String token = authHeader.replace(
-                SecurityConstants.TOKEN_PREFIX,
-                ""
-        );
+        String token = authHeader.substring(7);
 
         try {
 
-            String username = jwtUtil.extractUsername(token);
-
-            if (!jwtUtil.validateToken(token, username)) {
+            /*
+             * Validate JWT signature + expiration
+             */
+            if (!jwtUtil.validateToken(token)) {
 
                 log.error("Invalid JWT token");
 
-                exchange.getResponse()
-                        .setStatusCode(HttpStatus.UNAUTHORIZED);
-
-                return exchange.getResponse().setComplete();
+                return responseUtil.buildErrorResponse(
+                        exchange,
+                        HttpStatus.UNAUTHORIZED,
+                        "Invalid or expired JWT token"
+                );
             }
+
+            /*
+             * Extract username after validation
+             */
+            String username = jwtUtil.extractUsername(token);
+
+            /*
+             * Store username for RateLimitingFilter
+             */
+            exchange.getAttributes().put("username", username);
 
         } catch (Exception ex) {
 
-            log.error("JWT validation failed: {}", ex.getMessage());
+            log.error("JWT validation failed", ex);
 
             return responseUtil.buildErrorResponse(
                     exchange,
@@ -89,6 +100,8 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
                     "Invalid or expired JWT token"
             );
         }
+
+
 
         /*
          * Token Valid → Forward Request
@@ -98,6 +111,6 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -2;
+        return -3;
     }
 }

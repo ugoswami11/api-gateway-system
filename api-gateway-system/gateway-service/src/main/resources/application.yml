@@ -2,6 +2,12 @@ server:
   port: 8080
 
 spring:
+  data:
+    redis:
+      host: localhost
+      port: 6380
+      timeout: 6000ms
+
   application:
     name: gateway-service
 

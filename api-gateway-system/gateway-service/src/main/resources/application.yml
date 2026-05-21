@@ -16,15 +16,17 @@ spring:
       server:
         webflux:
           routes:
-
-            # User Service Route
             - id: user-service-route
               uri: http://localhost:8081
               predicates:
                 - Path=/api/users/**
-
               filters:
                 - StripPrefix=1
+
+                - name: CircuitBreaker
+                  args:
+                    name: userServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/users
 
             # Order Service Route
             - id: order-service-route
@@ -48,8 +50,26 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,circuitbreakers
 
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
+    io.github.resilience4j: DEBUG
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCircuitBreaker:
+
+        slidingWindowSize: 5
+
+        minimumNumberOfCalls: 3
+
+        failureRateThreshold: 50
+
+        waitDurationInOpenState: 10s
+
+        permittedNumberOfCallsInHalfOpenState: 2
+
+        automaticTransitionFromOpenToHalfOpenEnabled: true

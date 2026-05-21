@@ -44,12 +44,13 @@ public class JwtUtil {
     /*
      * Validate Token
      */
-    public boolean validateToken(String token, String username) {
-
-        String extractedUsername = extractUsername(token);
-
-        return extractedUsername.equals(username)
-                && !isTokenExpired(token);
+    public boolean validateToken(String token) {
+        try {
+            extractClaims(token);
+            return !isTokenExpired(token);
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     /*

@@ -72,7 +72,19 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,circuitbreakers
+        include: health,info,metrics,prometheus,circuitbreakers
+
+  endpoint:
+    health:
+      show-details: always
+
+  health:
+    circuitbreakers:
+      enabled: true
+
+  metrics:
+    tags:
+      application: gateway-service
 
 logging:
   level:
@@ -82,6 +94,10 @@ logging:
 
 resilience4j:
   circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+
     instances:
       userServiceCircuitBreaker:
 
@@ -96,3 +112,4 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 2
 
         automaticTransitionFromOpenToHalfOpenEnabled: true
+

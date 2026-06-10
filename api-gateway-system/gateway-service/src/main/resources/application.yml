@@ -21,7 +21,7 @@ spring:
         webflux:
           routes:
             - id: user-service-route
-              uri: http://localhost:8081
+              uri: lb://user-service
 
               predicates:
                 - Path=/api/users/**
@@ -52,7 +52,7 @@ spring:
 
             # Order Service Route
             - id: order-service-route
-              uri: http://localhost:8082
+              uri: lb://order-service
               predicates:
                 - Path=/api/orders/**
 
@@ -61,7 +61,7 @@ spring:
 
             # Payment Service Route
             - id: payment-service-route
-              uri: http://localhost:8083
+              uri: lb://payment-service
               predicates:
                 - Path=/api/payments/**
 
